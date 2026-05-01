@@ -2,7 +2,14 @@
   "name": "m3r-torrent",
   "private": true,
   "version": "1.0.0",
+  "description": "Central dashboard for M3R network where nodes submit blockchain data",
+  "main": "server.js",
   "scripts": {
+    "dev": "node server.js",
     "start": "node server.js"
-  }
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "license": "UNLICENSED"
 }
