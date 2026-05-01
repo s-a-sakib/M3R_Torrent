@@ -14,12 +14,36 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files
 app.use(express.static(path.join(__dirname)));
 
-// API routes
-app.use('/api/dashboard', require('./api/dashboard'));
-app.use('/api/account', require('./api/account'));
-app.use('/api/block', require('./api/block'));
-app.use('/api/escrow', require('./api/escrow'));
-app.use('/api/transaction', require('./api/transaction'));
+function createProxyHandler(handler, mapParams = {}) {
+  return (req, res, next) => {
+    Object.entries(mapParams).forEach(([key, value]) => {
+      if (req.params[value] !== undefined) {
+        req.query[key] = req.params[value];
+      }
+    });
+    handler(req, res, next);
+  };
+}
+
+const apiRouter = express.Router();
+apiRouter.get('/:network/dashboard', createProxyHandler(require('./api/dashboard'), { network: 'network' }));
+apiRouter.get('/dashboard', require('./api/dashboard'));
+apiRouter.get('/:network/account/:address', createProxyHandler(require('./api/account'), { network: 'network', address: 'address' }));
+apiRouter.get('/account', require('./api/account'));
+apiRouter.get('/:network/transaction/:hash', createProxyHandler(require('./api/transaction'), { network: 'network', hash: 'hash' }));
+apiRouter.get('/transaction', require('./api/transaction'));
+apiRouter.get('/:network/escrow/:id', createProxyHandler(require('./api/escrow'), { network: 'network', id: 'id' }));
+apiRouter.get('/escrow', require('./api/escrow'));
+apiRouter.get('/:network/block/:ref', createProxyHandler(require('./api/block'), { network: 'network', heightOrHash: 'ref' }));
+apiRouter.get('/block', require('./api/block'));
+
+apiRouter.post('/dashboard', require('./api/dashboard'));
+apiRouter.post('/account', require('./api/account'));
+apiRouter.post('/transaction', require('./api/transaction'));
+apiRouter.post('/escrow', require('./api/escrow'));
+apiRouter.post('/block', require('./api/block'));
+
+app.use(['/api', '/torrent/api'], apiRouter);
 
 // Health check
 app.get('/health', (req, res) => {
