@@ -1,4 +1,4 @@
-const defaultApiBase = "/api";
+const defaultApiBase = "https://m3r-torrent.onrender.com/torrent/api";
 const state = {
   apiBase: localStorage.getItem("m3r-torrent-api-base") || defaultApiBase,
   network: localStorage.getItem("m3r-torrent-network") || "mainnet",
