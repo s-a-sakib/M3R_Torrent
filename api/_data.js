@@ -14,11 +14,20 @@ function createNetworkData() {
   };
 }
 
+function createNetworkRegistry() {
+  return {};
+}
+
 const data = {
   networks: {
     mainnet: createNetworkData(),
     testnet: createNetworkData(),
     legacy: createNetworkData(),
+  },
+  nodeRegistry: {
+    mainnet: createNetworkRegistry(),
+    testnet: createNetworkRegistry(),
+    legacy: createNetworkRegistry(),
   },
   accounts: {},
   transactions: {},

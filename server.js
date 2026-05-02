@@ -26,8 +26,11 @@ function createProxyHandler(handler, mapParams = {}) {
 }
 
 const apiRouter = express.Router();
+const validatorsApi = require('./api/validators');
 apiRouter.get('/:network/dashboard', createProxyHandler(require('./api/dashboard'), { network: 'network' }));
 apiRouter.get('/dashboard', require('./api/dashboard'));
+apiRouter.get('/:network/nodes', createProxyHandler(validatorsApi.handleNodes, { network: 'network' }));
+apiRouter.get('/:network/live-node', createProxyHandler(validatorsApi.handleLiveNode, { network: 'network' }));
 apiRouter.get('/:network/account/:address', createProxyHandler(require('./api/account'), { network: 'network', address: 'address' }));
 apiRouter.get('/account', require('./api/account'));
 apiRouter.get('/:network/transaction/:hash', createProxyHandler(require('./api/transaction'), { network: 'network', hash: 'hash' }));
@@ -42,6 +45,8 @@ apiRouter.post('/account', require('./api/account'));
 apiRouter.post('/transaction', require('./api/transaction'));
 apiRouter.post('/escrow', require('./api/escrow'));
 apiRouter.post('/block', require('./api/block'));
+apiRouter.post('/:network/validators/announce', createProxyHandler(validatorsApi.handleAnnounce, { network: 'network' }));
+apiRouter.post('/:network/validators/offline', createProxyHandler(validatorsApi.handleOffline, { network: 'network' }));
 
 app.use(['/api', '/torrent/api'], apiRouter);
 

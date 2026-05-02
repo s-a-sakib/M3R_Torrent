@@ -1,6 +1,6 @@
 const defaultApiBase = "https://m3r-torrent.onrender.com/torrent/api";
 const state = {
-  apiBase: localStorage.getItem("m3r-torrent-api-base") || defaultApiBase,
+  apiBase: defaultApiBase,
   network: localStorage.getItem("m3r-torrent-network") || "mainnet",
 };
 let apiBaseInput;
@@ -16,7 +16,9 @@ function init() {
   networkSelect = document.getElementById("network");
   refreshBtn = document.getElementById("refreshBtn");
 
-  apiBaseInput.value = state.apiBase;
+  if (apiBaseInput) {
+    apiBaseInput.value = state.apiBase;
+  }
   networkSelect.value = state.network;
 
   document.getElementById("refreshBtn").addEventListener("click", () => {
@@ -62,9 +64,8 @@ function setLoadingState(isLoading) {
 }
 
 function persistConfig() {
-  state.apiBase = apiBaseInput.value.replace(/\/+$/, "");
+  state.apiBase = apiBaseInput ? apiBaseInput.value.replace(/\/+$/, "") : state.apiBase;
   state.network = networkSelect.value;
-  localStorage.setItem("m3r-torrent-api-base", state.apiBase);
   localStorage.setItem("m3r-torrent-network", state.network);
 }
 
@@ -154,7 +155,7 @@ function renderPerformance(performance, tip, generatedAt) {
 
 function renderNodes(nodes) {
   document.getElementById("nodesTable").innerHTML = toTable(
-    ["Wallet", "Status", "Stake", "Validation Fee", "Broadcast Fee", "Node URL"],
+    ["Wallet", "Status", "Stake", "Validation Fee", "Broadcast Fee", "Node URL", "Tx URL", "Last Seen"],
     nodes.map((node) => [
       mono(node.walletAddress),
       badge(node.status || "OFFLINE"),
@@ -162,6 +163,8 @@ function renderNodes(nodes) {
       `${node.validationFeeBps ?? 0} bps`,
       node.broadcastFeeFlat ?? 0,
       mono(node.nodeUrl || ""),
+      mono(node.txRequestUrl || ""),
+      formatAge(node.ageMs),
     ]),
     "No nodes announced."
   );
@@ -340,6 +343,18 @@ function formatMs(value) {
   }
   const seconds = Math.round(value / 1000);
   return `${seconds}s`;
+}
+
+function formatAge(value) {
+  if (value == null || Number.isNaN(Number(value))) {
+    return "n/a";
+  }
+  const seconds = Math.round(Number(value) / 1000);
+  if (seconds < 60) {
+    return `${seconds}s ago`;
+  }
+  const minutes = Math.round(seconds / 60);
+  return `${minutes}m ago`;
 }
 
 function updatePagination(paginationId, currentPage, totalPages) {
