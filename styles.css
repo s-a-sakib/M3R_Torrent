@@ -222,6 +222,8 @@ th {
 .offline { background: rgba(217, 119, 6, 0.14); color: #fdba74; }
 .jailed { background: rgba(220, 38, 38, 0.14); color: #fca5a5; }
 .pending { background: rgba(37, 99, 235, 0.14); color: #93c5fd; }
+.signed { background: rgba(15, 118, 110, 0.16); color: #99f6e4; }
+.reported { background: rgba(217, 119, 6, 0.14); color: #fdba74; }
 
 .split {
   display: grid;

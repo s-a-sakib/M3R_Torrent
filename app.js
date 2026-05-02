@@ -155,10 +155,11 @@ function renderPerformance(performance, tip, generatedAt) {
 
 function renderNodes(nodes) {
   document.getElementById("nodesTable").innerHTML = toTable(
-    ["Wallet", "Status", "Stake", "Validation Fee", "Broadcast Fee", "Node URL", "Tx URL", "Last Seen"],
+    ["Wallet", "Status", "Source", "Stake", "Validation Fee", "Broadcast Fee", "Node URL", "Tx URL", "Last Seen"],
     nodes.map((node) => [
       mono(node.walletAddress),
       badge(node.status || "OFFLINE"),
+      badge(node.registryVerified ? "SIGNED" : "REPORTED"),
       node.stake ?? 0,
       `${node.validationFeeBps ?? 0} bps`,
       node.broadcastFeeFlat ?? 0,
@@ -325,7 +326,7 @@ function toTable(headers, rows, emptyText) {
 
 function badge(value) {
   const normalized = String(value || "UNKNOWN").toLowerCase();
-  const cssClass = ["live", "offline", "jailed", "pending"].includes(normalized) ? normalized : "pending";
+  const cssClass = ["live", "offline", "jailed", "pending", "signed", "reported"].includes(normalized) ? normalized : "pending";
   return `<span class="badge ${cssClass}">${escapeHtml(String(value))}</span>`;
 }
 

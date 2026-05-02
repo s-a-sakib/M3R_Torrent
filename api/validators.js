@@ -151,8 +151,19 @@ function syncNetworkNodes(network) {
 
 function applyRegistryToDashboard(network, dashboard) {
   const nodes = listNodes(network);
-  dashboard.nodes = nodes;
+  const reportedNodes = Array.isArray(dashboard.nodes) ? dashboard.nodes : [];
+  dashboard.reportedNodes = reportedNodes.map((node) => ({
+    ...node,
+    registrySource: 'SNAPSHOT',
+    registryVerified: false,
+  }));
+  dashboard.nodes = nodes.length > 0 ? nodes.map((node) => ({
+    ...node,
+    registrySource: 'SIGNED',
+    registryVerified: true,
+  })) : dashboard.reportedNodes;
   dashboard.nodeStatusCounts = statusCounts(nodes);
+  dashboard.registryStatus = nodes.length > 0 ? 'SIGNED' : (reportedNodes.length > 0 ? 'SNAPSHOT_ONLY' : 'EMPTY');
   return dashboard;
 }
 
