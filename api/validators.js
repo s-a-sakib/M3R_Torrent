@@ -58,7 +58,10 @@ function handleAnnounce(req, res) {
     }
 
     const payload = announcementPayload(network, body);
-    const ok = verifySignature(keccak256(Buffer.from(payload, 'utf8')), hexToBytes(body.signatureHex), pubKey);
+    const payloadBytes = Buffer.from(payload, 'utf8');
+    const signatureBytes = hexToBytes(body.signatureHex);
+    const ok = verifySha256Signature(payloadBytes, signatureBytes, pubKey)
+      || verifySignature(keccak256(payloadBytes), signatureBytes, pubKey);
     if (!ok) {
       return res.status(400).json({ status: 'ERROR', message: 'invalid signature' });
     }
@@ -194,6 +197,19 @@ function verifySignature(hash, signature, pubKey) {
     ]);
     const key = crypto.createPublicKey({ key: spki, format: 'der', type: 'spki' });
     return crypto.verify(null, hash, key, signature);
+  } catch (error) {
+    return false;
+  }
+}
+
+function verifySha256Signature(payload, signature, pubKey) {
+  try {
+    const spki = Buffer.concat([
+      Buffer.from('3036301006072a8648ce3d020106052b8104000a032200', 'hex'),
+      Buffer.from(pubKey),
+    ]);
+    const key = crypto.createPublicKey({ key: spki, format: 'der', type: 'spki' });
+    return crypto.verify('sha256', payload, key, signature);
   } catch (error) {
     return false;
   }
