@@ -16,6 +16,10 @@
       </div>
       <div class="toolbar">
         <label class="field compact">
+          <span>Backend</span>
+          <input id="apiBase" value="http://localhost:3000/torrent/api">
+        </label>
+        <label class="field compact">
           <span>Network</span>
           <select id="network">
             <option value="mainnet">mainnet</option>
@@ -62,7 +66,6 @@
               <span class="meta">Recent ledger submissions</span>
             </div>
             <div id="transactionsTable" class="table-wrap"></div>
-            <div id="txPagination" class="pagination"></div>
           </div>
           <div>
             <div class="band-head">
@@ -70,7 +73,6 @@
               <span class="meta">Open and disputed cases</span>
             </div>
             <div id="escrowsTable" class="table-wrap"></div>
-            <div id="escrowPagination" class="pagination"></div>
           </div>
         </section>
       </div>
