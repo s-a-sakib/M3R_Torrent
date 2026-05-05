@@ -1,82 +1,55 @@
-const defaultApiBase = "https://m3r-torrent.onrender.com/torrent/api";
 const state = {
-  apiBase: defaultApiBase,
+  apiBase: localStorage.getItem("m3r-torrent-api-base") || "http://localhost:3000/torrent/api",
   network: localStorage.getItem("m3r-torrent-network") || "mainnet",
 };
-let apiBaseInput;
-let networkSelect;
-let refreshBtn;
-let currentData = null;
-let txPage = 1;
-let escrowPage = 1;
-const pageSize = 10;
 
-function init() {
-  apiBaseInput = document.getElementById("apiBase");
-  networkSelect = document.getElementById("network");
-  refreshBtn = document.getElementById("refreshBtn");
+const apiBaseInput = document.getElementById("apiBase");
+const networkSelect = document.getElementById("network");
 
-  if (apiBaseInput) {
-    apiBaseInput.value = state.apiBase;
-  }
-  networkSelect.value = state.network;
+apiBaseInput.value = state.apiBase;
+networkSelect.value = state.network;
 
-  document.getElementById("refreshBtn").addEventListener("click", () => {
-    persistConfig();
-    loadDashboard();
-  });
-
-  document.getElementById("accountSearch").addEventListener("submit", (event) => {
-    event.preventDefault();
-    lookup("account", event.target.value.value.trim(), renderAccountResult);
-  });
-
-  document.getElementById("txSearch").addEventListener("submit", (event) => {
-    event.preventDefault();
-    lookup("transaction", event.target.value.value.trim(), renderTxResult);
-  });
-
-  document.getElementById("blockSearch").addEventListener("submit", (event) => {
-    event.preventDefault();
-    lookup("block", event.target.value.value.trim(), renderBlockResult);
-  });
-
-  document.getElementById("escrowSearch").addEventListener("submit", (event) => {
-    event.preventDefault();
-    lookup("escrow", event.target.value.value.trim(), renderEscrowResult);
-  });
-
-  networkSelect.addEventListener("change", () => {
-    persistConfig();
-    loadDashboard();
-  });
-
+document.getElementById("refreshBtn").addEventListener("click", () => {
+  persistConfig();
   loadDashboard();
-}
+});
 
-document.addEventListener("DOMContentLoaded", init);
+document.getElementById("accountSearch").addEventListener("submit", (event) => {
+  event.preventDefault();
+  lookup("account", event.target.value.value.trim(), renderAccountResult);
+});
 
-function setLoadingState(isLoading) {
-  if (refreshBtn) {
-    refreshBtn.disabled = isLoading;
-    refreshBtn.textContent = isLoading ? "Loading..." : "Refresh";
-  }
-}
+document.getElementById("txSearch").addEventListener("submit", (event) => {
+  event.preventDefault();
+  lookup("transaction", event.target.value.value.trim(), renderTxResult);
+});
+
+document.getElementById("blockSearch").addEventListener("submit", (event) => {
+  event.preventDefault();
+  lookup("block", event.target.value.value.trim(), renderBlockResult);
+});
+
+document.getElementById("escrowSearch").addEventListener("submit", (event) => {
+  event.preventDefault();
+  lookup("escrow", event.target.value.value.trim(), renderEscrowResult);
+});
+
+networkSelect.addEventListener("change", () => {
+  persistConfig();
+  loadDashboard();
+});
 
 function persistConfig() {
-  state.apiBase = apiBaseInput ? apiBaseInput.value.replace(/\/+$/, "") : state.apiBase;
+  state.apiBase = apiBaseInput.value.replace(/\/+$/, "");
   state.network = networkSelect.value;
+  localStorage.setItem("m3r-torrent-api-base", state.apiBase);
   localStorage.setItem("m3r-torrent-network", state.network);
 }
 
 async function loadDashboard() {
-  setLoadingState(true);
   setText("lastUpdated", "Loading...");
-  txPage = 1;
-  escrowPage = 1;
   try {
     const data = await fetchJson(`${state.apiBase}/${state.network}/dashboard`);
-    currentData = data;
     renderStats(data);
     renderPerformance(data.performance, data.tip, data.generatedAt);
     renderNodes(data.nodes || []);
@@ -84,10 +57,8 @@ async function loadDashboard() {
     renderTransactions(data.transactions || []);
     renderEscrows(data.escrows || []);
   } catch (error) {
-    setText("lastUpdated", `Failed to load: ${error.message}`);
+    setText("lastUpdated", error.message);
     renderErrorTables(error.message);
-  } finally {
-    setLoadingState(false);
   }
 }
 
@@ -107,16 +78,10 @@ async function lookup(kind, value, renderer) {
 
 async function fetchJson(url) {
   const response = await fetch(url);
-  const text = await response.text();
   if (!response.ok) {
-    const body = text ? ` - ${text}` : "";
-    throw new Error(`Request failed ${response.status}${body}`);
+    throw new Error(`Request failed: ${response.status}`);
   }
-  try {
-    return text ? JSON.parse(text) : null;
-  } catch (error) {
-    throw new Error(`Invalid JSON response from ${url}`);
-  }
+  return response.json();
 }
 
 function renderStats(data) {
@@ -155,17 +120,14 @@ function renderPerformance(performance, tip, generatedAt) {
 
 function renderNodes(nodes) {
   document.getElementById("nodesTable").innerHTML = toTable(
-    ["Wallet", "Status", "Source", "Stake", "Validation Fee", "Broadcast Fee", "Node URL", "Tx URL", "Last Seen"],
+    ["Wallet", "Status", "Stake", "Validation Fee", "Broadcast Fee", "Node URL"],
     nodes.map((node) => [
       mono(node.walletAddress),
       badge(node.status || "OFFLINE"),
-      badge(node.registryVerified ? "SIGNED" : "REPORTED"),
       node.stake ?? 0,
       `${node.validationFeeBps ?? 0} bps`,
       node.broadcastFeeFlat ?? 0,
       mono(node.nodeUrl || ""),
-      mono(node.txRequestUrl || ""),
-      formatAge(node.ageMs),
     ]),
     "No nodes announced."
   );
@@ -187,28 +149,21 @@ function renderBlocks(blocks) {
 }
 
 function renderTransactions(transactions) {
-  const start = (txPage - 1) * pageSize;
-  const end = start + pageSize;
-  const paginated = transactions.slice(start, end);
   document.getElementById("transactionsTable").innerHTML = toTable(
     ["Hash", "Status", "Created"],
-    paginated.map((tx) => [
+    transactions.map((tx) => [
       mono(tx.hash),
       badge(tx.status || "UNKNOWN"),
       new Date(tx.createdAt).toLocaleString(),
     ]),
     "No transactions found."
   );
-  updatePagination("txPagination", txPage, Math.ceil(transactions.length / pageSize));
 }
 
 function renderEscrows(escrows) {
-  const start = (escrowPage - 1) * pageSize;
-  const end = start + pageSize;
-  const paginated = escrows.slice(start, end);
   document.getElementById("escrowsTable").innerHTML = toTable(
     ["Escrow", "Buyer", "Seller", "Status", "Amount"],
-    paginated.map((escrow) => [
+    escrows.map((escrow) => [
       mono(escrow.escrowId),
       mono(escrow.buyer),
       mono(escrow.seller),
@@ -217,7 +172,6 @@ function renderEscrows(escrows) {
     ]),
     "No escrows found."
   );
-  updatePagination("escrowPagination", escrowPage, Math.ceil(escrows.length / pageSize));
 }
 
 function renderErrorTables(message) {
@@ -326,7 +280,7 @@ function toTable(headers, rows, emptyText) {
 
 function badge(value) {
   const normalized = String(value || "UNKNOWN").toLowerCase();
-  const cssClass = ["live", "offline", "jailed", "pending", "signed", "reported"].includes(normalized) ? normalized : "pending";
+  const cssClass = ["live", "offline", "jailed", "pending"].includes(normalized) ? normalized : "pending";
   return `<span class="badge ${cssClass}">${escapeHtml(String(value))}</span>`;
 }
 
@@ -339,74 +293,11 @@ function setText(id, value) {
 }
 
 function formatMs(value) {
-  if (value == null || Number.isNaN(Number(value))) {
+  if (!value) {
     return "n/a";
   }
   const seconds = Math.round(value / 1000);
   return `${seconds}s`;
-}
-
-function formatAge(value) {
-  if (value == null || Number.isNaN(Number(value))) {
-    return "n/a";
-  }
-  const seconds = Math.round(Number(value) / 1000);
-  if (seconds < 60) {
-    return `${seconds}s ago`;
-  }
-  const minutes = Math.round(seconds / 60);
-  return `${minutes}m ago`;
-}
-
-function updatePagination(paginationId, currentPage, totalPages) {
-  const paginationEl = document.getElementById(paginationId);
-  if (totalPages <= 1) {
-    paginationEl.innerHTML = "";
-    return;
-  }
-
-  const prevId = paginationId.replace("Pagination", "Prev");
-  const nextId = paginationId.replace("Pagination", "Next");
-  paginationEl.innerHTML = `
-    <button id="${prevId}" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
-    <span>Page ${currentPage} of ${totalPages}</span>
-    <button id="${nextId}" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
-  `;
-
-  const prevButton = document.getElementById(prevId);
-  const nextButton = document.getElementById(nextId);
-
-  if (prevButton) {
-    prevButton.addEventListener("click", () => {
-      if (paginationId === "txPagination" && txPage > 1) {
-        txPage--;
-        renderTransactions(currentData?.transactions || []);
-      }
-      if (paginationId === "escrowPagination" && escrowPage > 1) {
-        escrowPage--;
-        renderEscrows(currentData?.escrows || []);
-      }
-    });
-  }
-
-  if (nextButton) {
-    nextButton.addEventListener("click", () => {
-      if (paginationId === "txPagination") {
-        const total = Math.ceil((currentData?.transactions || []).length / pageSize);
-        if (txPage < total) {
-          txPage++;
-          renderTransactions(currentData?.transactions || []);
-        }
-      }
-      if (paginationId === "escrowPagination") {
-        const total = Math.ceil((currentData?.escrows || []).length / pageSize);
-        if (escrowPage < total) {
-          escrowPage++;
-          renderEscrows(currentData?.escrows || []);
-        }
-      }
-    });
-  }
 }
 
 function escapeHtml(input) {
@@ -417,3 +308,5 @@ function escapeHtml(input) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+loadDashboard();

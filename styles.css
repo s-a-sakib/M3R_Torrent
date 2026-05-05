@@ -222,8 +222,6 @@ th {
 .offline { background: rgba(217, 119, 6, 0.14); color: #fdba74; }
 .jailed { background: rgba(220, 38, 38, 0.14); color: #fca5a5; }
 .pending { background: rgba(37, 99, 235, 0.14); color: #93c5fd; }
-.signed { background: rgba(15, 118, 110, 0.16); color: #99f6e4; }
-.reported { background: rgba(217, 119, 6, 0.14); color: #fdba74; }
 
 .split {
   display: grid;
@@ -266,29 +264,11 @@ th {
   font-size: 12px;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-.pagination button {
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  background: var(--panel-2);
-  color: var(--text);
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination span {
-  color: var(--muted);
+@media (max-width: 1120px) {
+  .layout,
+  .split,
+  .topbar {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
 }
